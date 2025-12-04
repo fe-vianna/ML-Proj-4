@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ML Model Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div class="app-container">
+    <div class="card">
+        <h1 class="title">Mini-Project 4: Lending Club Originations and Credit Score Information Content - Predictive Model API</h1>
+
+        <div class="preset-buttons">
+            <button type="button" class="preset-btn" id="preset1">Preset Inputs 1</button>
+            <button type="button" class="preset-btn" id="preset2">Preset Inputs 2</button>
+        </div>
+
+        <form id="predict-form" class="form">
+    {# Numeric features: number inputs #}
+    {% for name in numeric_features %}
+        <div class="form-group">
+            <label for="{{ name }}">
+                {{ name|replace('_', ' ')|title }}
+            </label>
+            <input
+                type="number"
+                step="any"
+                id="{{ name }}"
+                name="{{ name }}"
+                placeholder="Enter {{ name|replace('_', ' ')|lower }}"
+            >
+        </div>
+    {% endfor %}
+
+    {# Categorical features: text inputs, EXCEPT addr_state #}
+    {% for name in categorical_features %}
+        {% if name != "addr_state" %}
+            <div class="form-group">
+                <label for="{{ name }}">
+                    {{ name|replace('_', ' ')|title }}
+                </label>
+                <input
+                    type="text"
+                    id="{{ name }}"
+                    name="{{ name }}"
+                    placeholder="Enter {{ name|replace('_', ' ')|lower }}"
+                >
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    {# Hidden addr_state so the model still gets a value #}
+    <input type="hidden" id="addr_state" name="addr_state" value="CA">
+
+    <button type="submit" class="btn">Run Prediction</button>
+</form>
+
+        <div id="result-area" class="result hidden">
+            <h2>Prediction Result</h2>
+            <p id="prediction-text"></p>
+            <p id="confidence-text"></p>
+            <div id="inputs-summary"></div>
+        </div>
+
+        <div id="error-area" class="error hidden"></div>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('predict-form');
+    const resultArea = document.getElementById('result-area');
+    const predictionText = document.getElementById('prediction-text');
+    const confidenceText = document.getElementById('confidence-text');
+    const inputsSummary = document.getElementById('inputs-summary');
+    const errorArea = document.getElementById('error-area');
+
+    // ---------- PRESETS ----------
+
+    const PRESET_1 = {
+  // numeric features
+  loan_amnt: 10000,
+  funded_amnt: 10000,
+  funded_amnt_inv: 10000,
+  installment: 339.31,
+  annual_inc: 49200,
+  dti: 20.0,
+  delinq_2yrs: 0,
+  fico_range_low: 690,
+  fico_range_high: 694,
+  inq_last_6mths: 1,
+  mths_since_last_delinq: 0,        
+  open_acc: 10,
+  pub_rec: 0,
+  revol_bal: 5598,
+  total_acc: 37,
+  collections_12_mths_ex_med: 0,
+  mths_since_last_major_derog: 0,    
+  acc_now_delinq: 0,
+  tot_coll_amt: 0,
+  tot_cur_bal: 75000,
+  total_rev_hi_lim: 25000,
+  acc_open_past_24mths: 8,
+  avg_cur_bal: 5000,
+  bc_open_to_buy: 15000,
+  bc_util: 35.0,
+  chargeoff_within_12_mths: 0,
+  delinq_amnt: 0,
+  mo_sin_old_il_acct: 120,
+  mo_sin_old_rev_tl_op: 200,
+  mo_sin_rcnt_rev_tl_op: 6,
+  mo_sin_rcnt_tl: 8,
+  mort_acc: 1,
+  mths_since_recent_bc: 6,
+  mths_since_recent_bc_dlq: 0,
+  mths_since_recent_inq: 3,
+  mths_since_recent_revol_delinq: 0,
+  num_accts_ever_120_pd: 0,
+  num_actv_bc_tl: 5,
+  num_actv_rev_tl: 6,
+  num_bc_sats: 5,
+  num_bc_tl: 9,
+  num_il_tl: 4,
+  num_op_rev_tl: 7,
+  num_rev_accts: 14,
+  num_rev_tl_bal_gt_0: 10,
+  num_sats: 13,
+  num_tl_120dpd_2m: 0,
+  num_tl_30dpd: 0,
+  num_tl_90g_dpd_24m: 0,
+  num_tl_op_past_12m: 3,
+  pct_tl_nvr_dlq: 100.0,
+  percent_bc_gt_75: 10.0,
+  tax_liens: 0,
+  tot_hi_cred_lim: 180000,
+  total_bal_ex_mort: 23000,
+  total_bc_limit: 20000,
+  total_il_high_credit_limit: 35000,
+
+  // categorical features
+  term: " 36 months",
+  int_rate: " 13.49%",
+  grade: "C",
+  sub_grade: "C1",
+  emp_length: "10+ years",
+  home_ownership: "MORTGAGE",
+  verification_status: "Source Verified",
+  issue_d: "Jun-2015",
+  purpose: "debt_consolidation",
+  addr_state: null,
+  earliest_cr_line: "Jan-2007",
+  revol_util: "42.5%",
+  initial_list_status: "f",
+  application_type: "INDIVIDUAL",
+};
+
+const PRESET_2 = {
+  loan_amnt: 35000,
+  funded_amnt: 35000,
+  funded_amnt_inv: 35000,
+  installment: 925.0,
+  annual_inc: 32000,
+  dti: 44.5,
+  delinq_2yrs: 4,
+  fico_range_low: 600,
+  fico_range_high: 604,
+  inq_last_6mths: 8,
+  mths_since_last_delinq: 1,
+  open_acc: 5,
+  pub_rec: 2,
+  revol_bal: 22000,
+  total_acc: 25,
+  collections_12_mths_ex_med: 2,
+  mths_since_last_major_derog: 2,
+  acc_now_delinq: 2,
+  tot_coll_amt: 5000,
+  tot_cur_bal: 30000,
+  total_rev_hi_lim: 23000,
+  acc_open_past_24mths: 12,
+  avg_cur_bal: 3000,
+  bc_open_to_buy: 1000,
+  bc_util: 94.0,
+  chargeoff_within_12_mths: 1,
+  delinq_amnt: 1000,
+  mo_sin_old_il_acct: 24,
+  mo_sin_old_rev_tl_op: 36,
+  mo_sin_rcnt_rev_tl_op: 1,
+  mo_sin_rcnt_tl: 1,
+  mort_acc: 0,
+  mths_since_recent_bc: 2,
+  mths_since_recent_bc_dlq: 2,
+  mths_since_recent_inq: 0,
+  mths_since_recent_revol_delinq: 2,
+  num_accts_ever_120_pd: 2,
+  num_actv_bc_tl: 2,
+  num_actv_rev_tl: 4,
+  num_bc_sats: 2,
+  num_bc_tl: 5,
+  num_il_tl: 6,
+  num_op_rev_tl: 6,
+  num_rev_accts: 13,
+  num_rev_tl_bal_gt_0: 11,
+  num_sats: 9,
+  num_tl_120dpd_2m: 2,
+  num_tl_30dpd: 4,
+  num_tl_90g_dpd_24m: 3,
+  num_tl_op_past_12m: 8,
+  pct_tl_nvr_dlq: 25.0,
+  percent_bc_gt_75: 85.0,
+  tax_liens: 2,
+  tot_hi_cred_lim: 80000,
+  total_bal_ex_mort: 50000,
+  total_bc_limit: 15000,
+  total_il_high_credit_limit: 30000,
+
+  // categorical features
+  term: " 60 months",
+  int_rate: " 26.99%",
+  grade: "F",
+  sub_grade: "F5",
+  emp_length: "< 1 year",
+  home_ownership: "RENT",
+  verification_status: "Not Verified",
+  issue_d: "Oct-2016",
+  purpose: "small_business",
+  addr_state: null,            
+  earliest_cr_line: "Sep-2014",
+  revol_util: "95.0%",
+  initial_list_status: "w",
+  application_type: "INDIVIDUAL",
+};
+
+    function applyPreset(preset) {
+        errorArea.classList.add('hidden');
+        resultArea.classList.add('hidden');
+        errorArea.textContent = '';
+        predictionText.textContent = '';
+        confidenceText.textContent = '';
+        inputsSummary.innerHTML = '';
+
+        Object.entries(preset).forEach(([key, value]) => {
+            const input = document.getElementById(key);
+            if (input) {
+                input.value = value;
+            }
+        });
+    }
+
+    document.getElementById('preset1').addEventListener('click', () => applyPreset(PRESET_1));
+    document.getElementById('preset2').addEventListener('click', () => applyPreset(PRESET_2));
+
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        errorArea.classList.add('hidden');
+        resultArea.classList.add('hidden');
+        errorArea.textContent = '';
+        predictionText.textContent = 'Running prediction...';
+        confidenceText.textContent = '';
+        inputsSummary.innerHTML = '';
+        resultArea.classList.remove('hidden');
+
+        const formData = new FormData(form);
+        const payload = {};
+        formData.forEach((value, key) => {
+            payload[key] = value;
+        });
+
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Unknown error');
+            }
+
+    
+const predStr = String(data.prediction).trim();
+let label;
+
+if (predStr === "0") {
+    label = "Safe (0)";
+} else if (predStr === "1") {
+    label = "Flagged (1)";
+} else {
+    label = predStr;
+}
+
+predictionText.textContent = `Risk assessment: ${label}`;
+
+            if (data.confidence !== null && data.confidence !== undefined) {
+                const pct = (data.confidence * 100).toFixed(1);
+                confidenceText.textContent = `Model confidence: ${pct}%`;
+            } else {
+                confidenceText.textContent = '';
+            }
+
+
+                inputsSummary.innerHTML = "";
+
+        } catch (err) {
+            resultArea.classList.add('hidden');
+            errorArea.textContent = `Error: ${err.message}`;
+            errorArea.classList.remove('hidden');
+        }
+    });
+</script>
+</body>

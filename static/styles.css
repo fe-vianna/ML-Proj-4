@@ -1,0 +1,207 @@
+* {
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0b1437;
+    color: #f9fafb;
+}
+
+/* ===== Layout containers ===== */
+
+.app-container {
+    padding: 20px;
+    width: 100%;
+    max-width: 1400px; 
+    margin: 0 auto;
+}
+
+.card {
+    background: #0f172a;
+    border-radius: 18px;
+    padding: 24px 24px 28px;
+    box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(148, 163, 184, 0.25);
+}
+
+/* ===== Typography ===== */
+
+.title {
+    margin: 0 0 4px;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.subtitle {
+    margin: 0 0 20px;
+    font-size: 0.9rem;
+    color: #cbd5f5;
+}
+
+.preset-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.preset-btn {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #60a5fa;
+    background: transparent;
+    color: #e5f0ff;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.preset-btn:hover {
+    background: rgba(96, 165, 250, 0.15);
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.6);
+}
+
+/* ===== Form & inputs (9-column grid) ===== */
+
+.form {
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: 10px 12px; 
+    margin-bottom: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Labels */
+label {
+    font-size: 0.75rem;
+    color: #e5e7eb;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 16px;   
+}
+
+/* Inputs */
+
+input {
+    border-radius: 8px;
+    border: 1px solid #475569;
+    padding: 4px 6px;
+    font-size: 0.8rem;
+    background: #020617;
+    color: #f9fafb;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+
+input::placeholder {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+input:focus {
+    border-color: #60a5fa; 
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.9);
+    background-color: #02091b;
+}
+
+/* ===== Button ===== */
+
+.btn {
+    margin-top: 12px;
+    grid-column: 1 / -1; 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 14px;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    color: #0b1120;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.5);
+    filter: brightness(1.05);
+}
+
+/* ===== Result / error boxes ===== */
+
+.result,
+.error {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+}
+
+.result {
+    background: rgba(30, 64, 175, 0.25);
+    border: 1px solid rgba(96, 165, 250, 0.6);
+}
+
+.result h2 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+}
+
+.result h3 {
+    margin: 6px 0 4px;
+    font-size: 0.9rem;
+}
+
+.result ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
+}
+
+.error {
+    background: rgba(127, 29, 29, 0.4);
+    border: 1px solid rgba(248, 113, 113, 0.7);
+    color: #fee2e2;
+}
+
+.hidden {
+    display: none;
+}
+
+/* ===== Breakpoints ===== */
+
+@media (max-width: 1200px) {
+    .form {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .form {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .card {
+        padding: 18px 16px 22px;
+    }
+    .form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
